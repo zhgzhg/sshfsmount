@@ -121,10 +121,11 @@ if [[ "$RETCODE" -ge "0" && "$RETCODE" -le "1" ]]; then
 	echo -e "Should be mounted under /mnt/VM_$IPADDRESS";
 	
 # check if nohup is presented
+
 	nohup --help >&/dev/null
 	RETCODE=$?
 
-	if [ "$FAVOURITEFILEMANAGER" != "your favourite file manager" ]; then
+	if [[ "$FAVOURITEFILEMANAGER" != "your favourite file manager" && "$INSILENTMODE" != "1" ]]; then
 	
 		while [[ "$ANS" != "Y" && "$ANS" != "y" && "$ANS" != "N" && "$ANS" != "n" ]]; do
 			echo -ne "Do you want to open it with $FAVOURITEFILEMANAGER (only in root mode possible)[Y/N]? ";
@@ -136,6 +137,7 @@ if [[ "$RETCODE" -ge "0" && "$RETCODE" -le "1" ]]; then
 			if [ "$RETCODE" != "127" ]; then
 				FAVOURITEFILEMANAGERCMD="${FAVOURITEFILEMANAGER} /mnt/VM_$IPADDRESS";
 				nohup bash -c "$FAVOURITEFILEMANAGERCMD &"
+				rm nohup.out >&/dev/null
 			else
 				$FAVOURITEFILEMANAGER /mnt/VM_$IPADDRESS
 			fi

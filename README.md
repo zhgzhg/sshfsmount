@@ -21,7 +21,7 @@ To install sshfs for Ubuntu (Debian platforms; sometimes sudo is not needed) use
 
 	sudo apt-get install fuse-utils sshfs
 
-To instsll sshfs for Mandriva use:
+To install sshfs for Mandriva use:
 
 	urpmi fuse-utils sshfs
 
