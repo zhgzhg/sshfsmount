@@ -21,8 +21,8 @@ To unmount run:
 
 
 
-Dependencies instalation
-------------------------
+Dependencies installation
+-------------------------
 
 To install sshfs for Fedora (Red Hat platforms) and Cent OS use:
 
