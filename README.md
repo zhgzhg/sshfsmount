@@ -16,15 +16,15 @@ To install for Fedora use:
 
 To mount run:
 
-sh ./sshfsmount.sh
+	sh ./sshfsmount.sh
 
 To mount in silent mode run (useful when you want drives to be mounted at startup; also the RSA key should have already been saved):
 
-sh ./sshfsmount.sh --silent PASSWORD_OF_THE_MACHINE USERNAME ADDRESS_OF_THE_MACHINE
+	sh ./sshfsmount.sh --silent PASSWORD_OF_THE_MACHINE USERNAME ADDRESS_OF_THE_MACHINE
 
 To unmount run:
 
-sh ./sshfsunmount.sh
+	sh ./sshfsunmount.sh
 
 
 
