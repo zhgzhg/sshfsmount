@@ -1,5 +1,5 @@
 #!/bin/bash
-# versiq 3 (15-16.08.2013)
+# (C) 15-16.08.2013 zhgzhg
 
 if [ "$(id -u)" != "0" ]; then
    echo [You need to run this as root!]

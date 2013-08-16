@@ -1,5 +1,5 @@
 #!/bin/bash
-# versiq 3 (15-16.08.2013)
+# (C) 15-16.08.2013 zhgzhg
 # silent mode format: sh ./sshfsmount.sh --silent password username machine_ip_address
 
 IPADDRESS="192.168.36.98"
