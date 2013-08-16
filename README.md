@@ -1,5 +1,5 @@
-Quick bash scripts for un/mounting drivers using sshfs.
--------------------------------------------------------
+Quick bash scripts for un/mounting drives using sshfs.
+------------------------------------------------------
 
 Dependencies:
 
