@@ -6,7 +6,7 @@ Dependencies:
 *	fusemount
 *	nohup + (thunar or nautilus or dolphin) (optional)
 
-To install sshfs for Fedora (Red Hat platforms) use:
+To install sshfs for Fedora (Red Hat platforms) and Cent OS use:
 
 	su -
 
@@ -20,6 +20,10 @@ To install sshfs for Fedora (Red Hat platforms) use:
 To install sshfs for Ubuntu (Debian platforms; sometimes sudo is not needed) use:
 
 	sudo apt-get install fuse-utils sshfs
+
+To instsll sshfs for Mandriva use:
+
+	urpmi fuse-utils sshfs
 
 
 To mount drive run:
