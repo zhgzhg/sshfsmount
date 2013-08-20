@@ -1,12 +1,43 @@
 #!/bin/bash
-# (C) 15-16.08.2013 zhgzhg
+# (C) 20.08.2013 zhgzhg
 
-if [ "$(id -u)" != "0" ]; then
-   echo [You need to run this as root!]
-   exit 1
-fi
+############### configuration #####################
+
+MOUNTPATH="$HOME/sshfsmount"
+
+###################################################
 
 typeset RETCODE
+
+# check if mount path exists
+
+echo Checking for $MOUNTPATH ...
+
+if [ ! -d $MOUNTPATH ]; then
+
+	echo Missing! You need to configure MOUNTPATH script variable!
+	exit 1
+else
+	echo Presented! Testing for write permissions...
+	
+	TEMPWDIRTEST="write_test_$RANDOM";
+	mkdir $MOUNTPATH/$TEMPWDIRTEST >&/dev/null
+	RETCODE=$?
+
+	if [ $RETCODE != 0 ]; then
+		echo Fail! You do not have write permissions in $MOUNTPATH !
+		if [ "$(id -u)" != "0" ]; then
+				echo [Try to run this script as root!]
+		fi	
+		exit 1
+	else
+		echo Success!
+		rmdir $MOUNTPATH/$TEMPWDIRTEST >&/dev/null
+	fi
+	
+fi
+
+# check for available sshfs executable
 
 sshfs -h >&/dev/null
 RETCODE=$?
@@ -19,13 +50,13 @@ fi
 
 declare -a dirs
 i=1
-for d in /mnt/*
+for d in $MOUNTPATH/*
 do
     dirs[i++]="${d%/}"
 done
 
-if [ "${dirs[1]}" == "/mnt/*" ]; then
-	echo -e "No available directories inside /mnt !"
+if [ "${dirs[1]}" == "$MOUNTPATH/*" ]; then
+	echo -e "\nNo available directories inside $MOUNTPATH !"
 	exit 1
 fi
 
