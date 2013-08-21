@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 20.08.2013 zhgzhg
+# (C) 21.08.2013 zhgzhg
 # silent mode format: sh ./sshfsmount.sh --silent password username machine_ip_address
 
 ############### configuration #####################
@@ -182,8 +182,8 @@ if [[ "$RETCODE" -ge "0" && "$RETCODE" -le "1" ]]; then
 	if [[ "$FAVOURITEFILEMANAGER" != "your favourite file manager" && "$INSILENTMODE" != "1" ]]; then
 	
 		while [[ "$ANS" != "Y" && "$ANS" != "y" && "$ANS" != "N" && "$ANS" != "n" ]]; do
-			echo -ne "Do you want to open it with $FAVOURITEFILEMANAGER (only in root mode possible)[Y/N]? ";
-			read -e ANS;
+			echo -ne "Do you want to open it with $FAVOURITEFILEMANAGER[Y/N]? ";
+			read -e -n1 ANS;
 		done
 
 		if [[ "$ANS" == "Y" || "$ANS" == "y" ]]; then
