@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 21.08.2013 zhgzhg
+# (C) 06.10.2013 zhgzhg
 # silent mode format: sh ./sshfsmount.sh --silent password username machine_ip_address
 
 ############### configuration #####################
@@ -49,10 +49,10 @@ if [ ! -d $MOUNTPATH ]; then
 
 	echo Missing! Trying to create it!
 
-	mkdir $MOUNTPATH >&/dev/null
+	mkdir $MOUNTPATH >/dev/null 2>&1
 	RETCODE=$?
 	
-	if [ $RETCODE != 0 ]; then
+	if [ $RETCODE -ne 0 ]; then
 	
 		echo Fail!
 		
@@ -73,10 +73,10 @@ fi
 echo Testing for write permissions...
 	
 TEMPWDIRTEST="write_test_$RANDOM";
-mkdir $MOUNTPATH/$TEMPWDIRTEST >&/dev/null
+mkdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
 RETCODE=$?
 
-if [ $RETCODE != 0 ]; then
+if [ $RETCODE -ne 0 ]; then
 	echo Fail! You do not have write permissions in $MOUNTPATH !
 	if [ "$(id -u)" != "0" ]; then
 			echo [Try to run this script as root!]
@@ -84,15 +84,15 @@ if [ $RETCODE != 0 ]; then
 	exit 1
 else
 	echo Success!
-	rmdir $MOUNTPATH/$TEMPWDIRTEST >&/dev/null
+	rmdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
 fi
 
 # check for available sshfs executable
 
-sshfs -h >&/dev/null
+sshfs -h >/dev/null 2>&1
 RETCODE=$?
 
-if [ $RETCODE == 127 ]; then
+if [ $RETCODE -eq 127 ]; then
 	echo -e "You need to install sshfs!";
 	echo -e "For Fedora under root run \"yum install sshfs\" and \"yum install fuse-sshfs\".";
 	exit 1
@@ -102,18 +102,18 @@ fi
 
 FAVOURITEFILEMANAGER="your favourite file manager"
 
-thunar -h >&/dev/null
+thunar -h >/dev/null 2>&1
 RETCODE=$?
 
-if [ $RETCODE == 127 ]; then
-	nautilus -h >&/dev/null
+if [ $RETCODE -eq 127 ]; then
+	nautilus -h >/dev/null 2>&1
 	RETCODE=$?
 	
-	if [ $RETCODE == 127 ]; then
-		dolphin -h >&/dev/null
+	if [ $RETCODE -eq 127 ]; then
+		dolphin -h >/dev/null 2>&1
 		RETCODE=$?
 		
-		if [ $RETCODE != 127 ]; then		
+		if [ $RETCODE -ne 127 ]; then		
 			FAVOURITEFILEMANAGER="dolphin"
 		fi
 	else
@@ -126,7 +126,7 @@ fi
 echo -ne "\n"
 
 
-if [[ "$INSILENTMODE" != "1" && "$IP" == "" ]]; then
+if [[ $INSILENTMODE -ne 1 && "$IP" = "" ]]; then
 
 	echo -ne "IP Address (default $IPADDRESS): ";
 	read -e IP;	
@@ -139,7 +139,7 @@ else
 	echo -e "Set machine IP address => $IPADDRESS";
 fi
 
-if [[ "$INSILENTMODE" != "1" && "$USERNM" == "" ]]; then
+if [[ $INSILENTMODE -ne 1 && "$USERNM" = "" ]]; then
 	echo -ne "Username (default $USERNAME): ";
 	read -e USERNM;
 fi
@@ -163,35 +163,35 @@ fi
 
 echo Mounting...
 
-if [ "$PASSWORD" == "" ]; then
+if [ "$PASSWORD" = "" ]; then
 	sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_$IPADDRESS/ -C
 else
 	bash -c "echo $PASSWORD | sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_$IPADDRESS/ -C -o password_stdin"
 fi
 RETCODE=$?
 
-if [[ "$RETCODE" -ge "0" && "$RETCODE" -le "1" ]]; then
+if [[ $RETCODE -ge 0 && $RETCODE -le 1 ]]; then
 	ANS="";
 	echo -e "\nShould be mounted under $MOUNTPATH/VM_$IPADDRESS";
 	
 # check if nohup is presented
 
-	nohup --help >&/dev/null
+	nohup --help >/dev/null 2>&1
 	RETCODE=$?
 
-	if [[ "$FAVOURITEFILEMANAGER" != "your favourite file manager" && "$INSILENTMODE" != "1" ]]; then
+	if [[ "$FAVOURITEFILEMANAGER" != "your favourite file manager" && $INSILENTMODE -ne 1 ]]; then
 	
 		while [[ "$ANS" != "Y" && "$ANS" != "y" && "$ANS" != "N" && "$ANS" != "n" ]]; do
 			echo -ne "Do you want to open it with $FAVOURITEFILEMANAGER[Y/N]? ";
 			read -e -n1 ANS;
 		done
 
-		if [[ "$ANS" == "Y" || "$ANS" == "y" ]]; then
+		if [[ "$ANS" = "Y" || "$ANS" = "y" ]]; then
 			
-			if [ "$RETCODE" != "127" ]; then
+			if [ $RETCODE -ne 127 ]; then
 				FAVOURITEFILEMANAGERCMD="${FAVOURITEFILEMANAGER} $MOUNTPATH/VM_$IPADDRESS";
-				nohup bash -c "$FAVOURITEFILEMANAGERCMD &" >&/dev/null
-				rm nohup.out >&/dev/null
+				nohup bash -c "$FAVOURITEFILEMANAGERCMD &" >/dev/null 2>&1
+				rm nohup.out >/dev/null 2>&1
 			else
 				$FAVOURITEFILEMANAGER $MOUNTPATH/VM_$IPADDRESS
 			fi

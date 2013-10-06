@@ -9,15 +9,15 @@ Dependencies:
 
 To mount drive run:
 
-	sh ./sshfsmount.sh
+	bash ./sshfsmount.sh
 
 To mount in silent mode run (useful when you want drives to be mounted at startup; also the RSA key should have already been saved):
 
-	sh ./sshfsmount.sh --silent PASSWORD_OF_THE_MACHINE USERNAME ADDRESS_OF_THE_MACHINE
+	bash ./sshfsmount.sh --silent PASSWORD_OF_THE_MACHINE USERNAME ADDRESS_OF_THE_MACHINE
 
 To unmount run:
 
-	sh ./sshfsunmount.sh
+	bash ./sshfsunmount.sh
 
 
 
@@ -42,6 +42,3 @@ To install sshfs for Ubuntu (Debian platforms; sometimes sudo is not needed) use
 To install sshfs for Mandriva use:
 
 	urpmi fuse-utils sshfs
-
-
-

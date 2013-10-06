@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 20.08.2013 zhgzhg
+# (C) 06.10.2013 zhgzhg
 
 ############### configuration #####################
 
@@ -21,10 +21,10 @@ else
 	echo Presented! Testing for write permissions...
 	
 	TEMPWDIRTEST="write_test_$RANDOM";
-	mkdir $MOUNTPATH/$TEMPWDIRTEST >&/dev/null
+	mkdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
 	RETCODE=$?
 
-	if [ $RETCODE != 0 ]; then
+	if [ $RETCODE -ne 0 ]; then
 		echo Fail! You do not have write permissions in $MOUNTPATH !
 		if [ "$(id -u)" != "0" ]; then
 				echo [Try to run this script as root!]
@@ -32,17 +32,17 @@ else
 		exit 1
 	else
 		echo Success!
-		rmdir $MOUNTPATH/$TEMPWDIRTEST >&/dev/null
+		rmdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
 	fi
 	
 fi
 
 # check for available sshfs executable
 
-sshfs -h >&/dev/null
+sshfs -h >/dev/null 2>&1
 RETCODE=$?
 
-if [ $RETCODE == 127 ]; then
+if [ $RETCODE -eq 127 ]; then
 	echo -e "You need to install sshfs!";
 	echo -e "For Fedora under root run \"yum install sshfs\" and \"yum install fuse-sshfs\".";
 	exit 1
@@ -74,7 +74,7 @@ echo -ne "\nChoose the directory you want to unmount: "
 INDEX=""
 read -e INDEX;
 
-if [ "$INDEX" -eq 0 ]; then
+if [ $INDEX -eq 0 ]; then
 	echo Canceled!
 	exit 1
 fi
