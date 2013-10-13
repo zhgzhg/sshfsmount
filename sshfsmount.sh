@@ -1,6 +1,6 @@
 #!/bin/bash
-# (C) 06.10.2013 zhgzhg
-# silent mode format: sh ./sshfsmount.sh --silent password username machine_ip_address
+# (C) 13.10.2013 zhgzhg
+# silent mode format: sshfsmount.sh [--silent password username machine_ip_address]
 
 ############### configuration #####################
 
@@ -128,7 +128,7 @@ echo -ne "\n"
 
 if [[ $INSILENTMODE -ne 1 && "$IP" = "" ]]; then
 
-	echo -ne "IP Address (default $IPADDRESS): ";
+	echo -e "IP Address (default $IPADDRESS): ";
 	read -e IP;	
 fi
 
@@ -140,7 +140,7 @@ else
 fi
 
 if [[ $INSILENTMODE -ne 1 && "$USERNM" = "" ]]; then
-	echo -ne "Username (default $USERNAME): ";
+	echo -e "Username (default $USERNAME): ";
 	read -e USERNM;
 fi
 

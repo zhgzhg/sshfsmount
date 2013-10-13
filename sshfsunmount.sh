@@ -1,11 +1,26 @@
 #!/bin/bash
-# (C) 06.10.2013 zhgzhg
+# (C) 13.10.2013 zhgzhg
+# semi-silent mode format: sshfsunount.sh [--unmount <full_path>][-1][-2]
+# --unmount <full_path_to_the_directory_to_be_unmounted>
+# -1 unmounts all directories inside the default MOUNTPATH
+# -2 forced unmount of all inside the default MOUNTPATH
 
 ############### configuration #####################
 
 MOUNTPATH="$HOME/sshfsmount"
 
 ###################################################
+
+INSILENTMODE=0
+
+if [ -n "$1" ]; then
+	if [[ -n "$2" && "$1" == "--unmount" ]]; then
+		INSILENTMODE=1
+		MOUNTPATH=$2
+	elif [[ "$1" == "-1" || "$1" == "-2" ]]; then
+		INSILENTMODE=$1	
+	fi
+fi
 
 typeset RETCODE
 
@@ -14,15 +29,29 @@ typeset RETCODE
 echo Checking for $MOUNTPATH ...
 
 if [ ! -d $MOUNTPATH ]; then
-
-	echo Missing! You need to configure MOUNTPATH script variable!
+	if [ $INSILENTMODE -eq 1 ]; then
+		echo Missing! Check your path and directory name!
+	else
+		echo Missing! You need to configure MOUNTPATH script variable!
+	fi	
 	exit 1
 else
-	echo Presented! Testing for write permissions...
+	echo -n "Presented! "
+	
+	if [ $INSILENTMODE -eq 0 ]; then
+		echo Testing for write permissions...
+	else
+		echo Write permissions testing is skipped in this mode!
+	fi
 	
 	TEMPWDIRTEST="write_test_$RANDOM";
-	mkdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
-	RETCODE=$?
+	
+	if [ $INSILENTMODE -eq 0 ]; then
+		mkdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
+		RETCODE=$?
+	else
+		RETCODE=0
+	fi
 
 	if [ $RETCODE -ne 0 ]; then
 		echo Fail! You do not have write permissions in $MOUNTPATH !
@@ -50,29 +79,43 @@ fi
 
 declare -a dirs
 i=1
-for d in $MOUNTPATH/*
-do
-    dirs[i++]="${d%/}"
-done
+if [ $INSILENTMODE -ne 1 ]; then
+	for d in $MOUNTPATH/*
+	do
+		dirs[i++]="${d%/}"
+	done
 
-if [ "${dirs[1]}" == "$MOUNTPATH/*" ]; then
-	echo -e "\nNo available directories inside $MOUNTPATH !"
-	exit 1
+	if [ "${dirs[1]}" == "$MOUNTPATH/*" ]; then
+		echo -e "\nNo available directories inside $MOUNTPATH !"
+		exit 1
+	fi
+else
+	dirs[i++]="$MOUNTPATH"
 fi
 
-echo -e "\nDirectories list (for unmounting are those with \"VM_\" prefix):\n"
+if [ $INSILENTMODE -eq 0 ]; then
+	echo -e "\nDirectories list (for unmounting are those with \"VM_\" prefix):\n"
 
-echo "[ 0 ]:  Cancel"
+	echo "[ -2 ]: Force unmount everything"
+	echo -e "[ -1 ]: Unmount everything\n"
+	echo -e "[ 0 ]:  Cancel\n"
 
-for((i=1;i<=${#dirs[@]};i++))
-do
-    echo "[" $i "]: " "${dirs[i]}"
-done
+	for((i=1;i<=${#dirs[@]};i++))
+	do
+		echo "[" $i "]: " "${dirs[i]}"
+	done
 
-echo -ne "\nChoose the directory you want to unmount: "
+	echo -ne "\nChoose the directory you want to unmount: "
+fi
 
+ENDOFINDEX=0
 INDEX=""
-read -e INDEX;
+
+if [ $INSILENTMODE -eq 0 ]; then
+	read -e INDEX;
+else
+	INDEX=$INSILENTMODE;
+fi
 
 if [ $INDEX -eq 0 ]; then
 	echo Canceled!
@@ -80,12 +123,26 @@ if [ $INDEX -eq 0 ]; then
 fi
 
 
-echo -e "Unmounting ${dirs[$INDEX]}..."
+if [ $INDEX -lt 0 ]; then
+	if [ $INDEX -eq -1 ]; then
+		echo Starting unmounting of all directories!
+	else
+		echo Starting forced unmounting of all directories!
+		killall -s 5 sshfs >/dev/null 2>&1
+	fi
+	INDEX=1
+	ENDOFINDEX=${#dirs[@]};
+else
+	ENDOFINDEX=INDEX;
+fi
 
-fusermount -u ${dirs[$INDEX]}
 
-echo -e "Removing ${dirs[$INDEX]}..."
-
-rmdir ${dirs[$INDEX]}
+for ((i=$INDEX;i<=$ENDOFINDEX;i++))
+do
+	echo -e "Unmounting ${dirs[$i]}..."
+	fusermount -u ${dirs[$i]}
+	echo -e "Removing ${dirs[$i]}..."
+	rmdir ${dirs[$i]}
+done
 
 echo Done!
