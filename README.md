@@ -19,7 +19,7 @@ To unmount run:
 
 	bash ./sshfsunmount.sh
 	
-To unmount run in semi-silent mode (useful when you want drives to be unmounted at shutdown):
+To unmount in semi-silent mode run (useful when you want drives to be unmounted at shutdown):
 
 	bash ./sshfsunmount.sh --unmount FULL_DIRECTORY_PATH_TO_UNMOUNT
 		or
