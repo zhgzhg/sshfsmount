@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 13.10.2013 zhgzhg
+# (C) 17.10.2013 zhgzhg
 # silent mode format: sshfsmount.sh [--silent password username machine_ip_address]
 
 ############### configuration #####################
@@ -95,6 +95,8 @@ RETCODE=$?
 if [ $RETCODE -eq 127 ]; then
 	echo -e "You need to install sshfs!";
 	echo -e "For Fedora under root run \"yum install sshfs\" and \"yum install fuse-sshfs\".";
+	echo -e "For Ubuntu run \"sudo apt-get install fuse-utils sshfs\"."
+	echo -e "For Mandriva run \"urpmi fuse-utils sshfs\".";
 	exit 1
 fi
 
@@ -128,20 +130,22 @@ echo -ne "\n"
 
 if [[ $INSILENTMODE -ne 1 && "$IP" = "" ]]; then
 
-	echo -e "IP Address (default $IPADDRESS): ";
-	read -e IP;	
+	echo -e "Hostname/IP Address (default $IPADDRESS): ";
+	read -e IP;
+	echo -en "\033[1A\033[2K";
 fi
 
 if [ -n "$IP" ]; then
-	echo -e "Set machine IP address => $IP";
+	echo -e "Set machine address => $IP";
 	IPADDRESS=$IP;
 else
-	echo -e "Set machine IP address => $IPADDRESS";
+	echo -e "Set machine address => $IPADDRESS";
 fi
 
 if [[ $INSILENTMODE -ne 1 && "$USERNM" = "" ]]; then
 	echo -e "Username (default $USERNAME): ";
 	read -e USERNM;
+	echo -en "\033[1A\033[2K";
 fi
 
 if [ -n "$USERNM" ]; then

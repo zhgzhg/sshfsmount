@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 13.10.2013 zhgzhg
+# (C) 17.10.2013 zhgzhg
 # semi-silent mode format: sshfsunount.sh [--unmount <full_path>][-1][-2]
 # --unmount <full_path_to_the_directory_to_be_unmounted>
 # -1 unmounts all directories inside the default MOUNTPATH
@@ -18,7 +18,12 @@ if [ -n "$1" ]; then
 		INSILENTMODE=1
 		MOUNTPATH=$2
 	elif [[ "$1" == "-1" || "$1" == "-2" ]]; then
-		INSILENTMODE=$1	
+		INSILENTMODE=$1
+	else
+		echo -e "Invalid parameters! Must be --unmount <directory_full_path>"
+		echo -e "or -1 or -2 for normal/force unmount of all directories"
+		echo -e "inside the set default path."
+		exit 1;
 	fi
 fi
 
@@ -74,6 +79,8 @@ RETCODE=$?
 if [ $RETCODE -eq 127 ]; then
 	echo -e "You need to install sshfs!";
 	echo -e "For Fedora under root run \"yum install sshfs\" and \"yum install fuse-sshfs\".";
+	echo -e "For Ubuntu run \"sudo apt-get install fuse-utils sshfs\"."
+	echo -e "For Mandriva run \"urpmi fuse-utils sshfs\".";
 	exit 1
 fi
 
