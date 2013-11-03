@@ -112,7 +112,7 @@ if [ $INSILENTMODE -eq 0 ]; then
 		echo "[" $i "]: " "${dirs[i]}"
 	done
 
-	echo -ne "\nChoose the directory you want to unmount: "
+	echo -e "\nChoose the directory you want to unmount: "
 fi
 
 ENDOFINDEX=0
