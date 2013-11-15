@@ -1,16 +1,18 @@
 #!/bin/bash
-# (C) 17.10.2013 zhgzhg
-# silent mode format: sshfsmount.sh [--silent password username machine_ip_address]
+# (C) 16.11.2013 zhgzhg
+# silent mode format: sshfsmount.sh [--silent password username machine_ip_address port]
 
 ############### configuration #####################
 
 IPADDRESS="192.168.36.98"
+PORT="22"
 USERNAME="root"
 MOUNTPATH="$HOME/sshfsmount"
 
 ###################################################
 
 IP=""
+PRT=""
 USERNM=""
 PASSWORD=""
 
@@ -27,6 +29,9 @@ if [ -n "$1" ]; then
 		fi
 		if [ -n "$4" ]; then
 			IP=$4
+		fi
+		if [ -n "$5" ]; then
+			PORT=$5
 		fi
 		
 		
@@ -142,6 +147,20 @@ else
 	echo -e "Set machine address => $IPADDRESS";
 fi
 
+if [[ $INSILENTMODE -ne 1 && "$PRT" = "" ]]; then
+
+	echo -e "Port (default $PORT): ";
+	read -e PRT;
+	echo -en "\033[1A\033[2K";
+fi
+
+if [ -n "$PRT" ]; then
+	echo -e "Set machine port => $PRT";
+	PORT=$PRT;
+else
+	echo -e "Set machine port => $PORT";
+fi
+
 if [[ $INSILENTMODE -ne 1 && "$USERNM" = "" ]]; then
 	echo -e "Username (default $USERNAME): ";
 	read -e USERNM;
@@ -168,7 +187,7 @@ fi
 echo Mounting...
 
 if [ "$PASSWORD" = "" ]; then
-	sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_$IPADDRESS/ -C
+	sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_$IPADDRESS/ -C -p $PORT
 else
 	bash -c "echo $PASSWORD | sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_$IPADDRESS/ -C -o password_stdin"
 fi
