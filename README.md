@@ -13,7 +13,7 @@ To mount drive run:
 
 To mount in silent mode run (useful when you want drives to be mounted at startup; also the RSA key should have already been saved):
 
-	bash ./sshfsmount.sh --silent PASSWORD_OF_THE_MACHINE USERNAME ADDRESS_OF_THE_MACHINE
+	bash ./sshfsmount.sh --silent PASSWORD_OF_THE_MACHINE USERNAME ADDRESS_OF_THE_MACHINE PORT
 
 To unmount run:
 
