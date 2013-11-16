@@ -217,7 +217,7 @@ if [[ $RETCODE -ge 0 && $RETCODE -le 1 ]]; then
 		if [[ "$ANS" = "Y" || "$ANS" = "y" ]]; then
 			
 			if [ $RETCODE -ne 127 ]; then
-				FAVOURITEFILEMANAGERCMD="${FAVOURITEFILEMANAGER} $MOUNTPATH/VM_$IPADDRESS";
+				FAVOURITEFILEMANAGERCMD="${FAVOURITEFILEMANAGER} $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}";
 				nohup bash -c "$FAVOURITEFILEMANAGERCMD &" >/dev/null 2>&1
 				rm nohup.out >/dev/null 2>&1
 			else
