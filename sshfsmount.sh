@@ -175,11 +175,16 @@ else
 fi
 
 
-echo -e "Checking for $MOUNTPATH/VM_$IPADDRESS...";
+echo -e "Checking for $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}...";
 
-if [ ! -d $MOUNTPATH/VM_$IPADDRESS ]; then
+if [ ! -d $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME} ]; then
 	echo Missing! Creating one...	
-	mkdir $MOUNTPATH/VM_$IPADDRESS
+	mkdir $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}
+	RETCODE=$?
+	if [ $RETCODE -ge 0 ]; then
+		echo -e "Error! Cannot create that directory!";
+		exit 1;
+	fi
 else
 	echo Presented!
 fi
@@ -187,15 +192,15 @@ fi
 echo Mounting...
 
 if [ "$PASSWORD" = "" ]; then
-	sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_$IPADDRESS/ -C -p $PORT
+	sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}/ -C -p $PORT
 else
-	bash -c "echo $PASSWORD | sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_$IPADDRESS/ -C -o password_stdin"
+	bash -c "echo $PASSWORD | sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}/ -C -p $PORT -o password_stdin"
 fi
 RETCODE=$?
 
 if [[ $RETCODE -ge 0 && $RETCODE -le 1 ]]; then
 	ANS="";
-	echo -e "\nShould be mounted under $MOUNTPATH/VM_$IPADDRESS";
+	echo -e "\nShould be mounted under $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}";
 	
 # check if nohup is presented
 
@@ -216,7 +221,7 @@ if [[ $RETCODE -ge 0 && $RETCODE -le 1 ]]; then
 				nohup bash -c "$FAVOURITEFILEMANAGERCMD &" >/dev/null 2>&1
 				rm nohup.out >/dev/null 2>&1
 			else
-				$FAVOURITEFILEMANAGER $MOUNTPATH/VM_$IPADDRESS
+				$FAVOURITEFILEMANAGER $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}
 			fi
 		else
 			echo Autoopen canceled!
