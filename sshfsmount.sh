@@ -181,7 +181,7 @@ if [ ! -d $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME} ]; then
 	echo Missing! Creating one...	
 	mkdir $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}
 	RETCODE=$?
-	if [ $RETCODE -ge 0 ]; then
+	if [ $RETCODE -gt 0 ]; then
 		echo -e "Error! Cannot create that directory!";
 		exit 1;
 	fi
