@@ -39,13 +39,13 @@ If you do not want to type "bash" or "sh" before the scripts use:
 Dependencies installation
 -------------------------
 
-To install sshfs for Fedora (Red Hat platforms) and Cent OS use:
+To install sshfs for Fedora and Cent OS (Red Hat platforms) use:
 
     su -
 
     yum install fuse-sshfs
 
-    or
+        or
 
     yum install sshfs
 
