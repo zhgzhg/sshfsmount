@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 26.02.2014 zhgzhg
+# (C) 20.07.2014 zhgzhg
 # silent mode format: sshfsmount.sh [--silent password username machine_ip_address port]
 
 ############### configuration #####################
@@ -48,7 +48,7 @@ typeset RETCODE
 
 # check if mount path exists
 
-echo Checking for $MOUNTPATH ...
+echo -e "Checking for '${MOUNTPATH}' directory..."
 
 if [ ! -d $MOUNTPATH ]; then
 
@@ -60,6 +60,10 @@ if [ ! -d $MOUNTPATH ]; then
   if [ $RETCODE -ne 0 ]; then
   
     echo Fail!
+    if [[ -f $MOUNTPATH ]]; then 
+		echo -e "'${MOUNTPATH}' is a file!\nRename it or remove it from there!"
+		exit 1
+	fi
     
     if [ "$(id -u)" != "0" ]; then
       echo [You need to run this script as root!]
@@ -83,6 +87,7 @@ RETCODE=$?
 
 if [ $RETCODE -ne 0 ]; then
   echo Fail! You do not have write permissions in $MOUNTPATH !
+    
   if [ "$(id -u)" != "0" ]; then
       echo [Try to run this script as root!]
   fi  
