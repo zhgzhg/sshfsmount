@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 20.07.2014 zhgzhg
+# (C) 30.01.2015 zhgzhg
 # silent mode format: sshfsmount.sh [--silent password username machine_ip_address port]
 
 ############### configuration #####################
@@ -110,38 +110,46 @@ if [ $RETCODE -eq 127 ]; then
   exit 1
 fi
 
+# check if this is Mac OS
+uname -a | grep "Darwin" >/dev/null
+ISNOTMACOS=$?
+
 #check for available file managers
 
 FAVOURITEFILEMANAGER="your favourite file manager"
 
-thunar -h >/dev/null 2>&1
-RETCODE=$?
+if [ ISNOTMACOS -eq 1 ]; then
 
-if [ $RETCODE -eq 127 ]; then
-  nautilus -h >/dev/null 2>&1
+  thunar -h >/dev/null 2>&1
   RETCODE=$?
   
   if [ $RETCODE -eq 127 ]; then
-    dolphin -h >/dev/null 2>&1
+    nautilus -h >/dev/null 2>&1
     RETCODE=$?
     
-    if [ $RETCODE -eq 127 ]; then      
-      nemo -h >/dev/null 2>&1
+    if [ $RETCODE -eq 127 ]; then
+      dolphin -h >/dev/null 2>&1
       RETCODE=$?
       
-      if [ $RETCODE -ne 127 ]; then    
-        FAVOURITEFILEMANAGER="nemo"
-      fi      
+      if [ $RETCODE -eq 127 ]; then      
+        nemo -h >/dev/null 2>&1
+        RETCODE=$?
+        
+        if [ $RETCODE -ne 127 ]; then    
+          FAVOURITEFILEMANAGER="nemo"
+        fi      
+      else
+        FAVOURITEFILEMANAGER="dolphin"
+      fi
     else
-      FAVOURITEFILEMANAGER="dolphin"
+      FAVOURITEFILEMANAGER="nautilus"
     fi
   else
-    FAVOURITEFILEMANAGER="nautilus"
+    FAVOURITEFILEMANAGER="thunar"
   fi
 else
-  FAVOURITEFILEMANAGER="thunar"
+  FAVOURITEFILEMANAGER="open"
 fi
-
 echo -ne "\n"
 
 

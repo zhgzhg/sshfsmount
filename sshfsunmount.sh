@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 26.02.2014 zhgzhg
+# (C) 30.01.2015 zhgzhg
 # semi-silent mode format: sshfsunmount.sh [--unmount <full_path>][-1][-2]
 # --unmount <full_path_to_the_directory_to_be_unmounted>
 # -1 unmounts all directories inside the default MOUNTPATH
@@ -143,11 +143,18 @@ else
   ENDOFINDEX=INDEX;
 fi
 
+# check if this is Mac OS
+uname -a | grep "Darwin" >/dev/null
+ISNOTMACOS=$?
 
 for ((i=$INDEX;i<=$ENDOFINDEX;i++))
 do
   echo -e "Unmounting ${dirs[$i]}..."
-  fusermount -u ${dirs[$i]}
+  if [ $ISNOTMACOS -eq 1 ]; then
+    fusermount -u ${dirs[$i]}
+  else
+    umount ${dirs[$i]}
+  fi
   echo -e "Removing ${dirs[$i]}..."
   rmdir ${dirs[$i]}
 done

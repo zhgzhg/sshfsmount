@@ -5,7 +5,7 @@ Dependencies:
 
 *  sshfs
 *  fusemount
-*  nohup + (thunar or nautilus or dolphin or nemo) (optional)
+*  nohup + (thunar or nautilus or dolphin or nemo or open for Mac OS) (optional)
 
 To mount drive run:
 
