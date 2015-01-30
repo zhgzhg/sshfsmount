@@ -34,6 +34,15 @@ If you do not want to type "bash" or "sh" before the scripts use:
 
     chmod +x ./sshfsmount.sh
     chmod +x ./sshfsunmount.sh
+    
+Installing the tools
+--------------------
+
+Although the tools were intended to be used as a separate files you can
+install them using the install.sh script.
+The installation requires superuser rights.
+
+	su -c "bash ./install.sh"
 
 
 Dependencies installation
