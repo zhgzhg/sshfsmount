@@ -8,6 +8,7 @@ IPADDRESS="192.168.36.98"
 PORT="22"
 USERNAME="root"
 MOUNTPATH="$HOME/sshfsmount"
+REMOTEMOUNTPATH="/"
 
 ###################################################
 
@@ -118,7 +119,7 @@ ISNOTMACOS=$?
 
 FAVOURITEFILEMANAGER="your favourite file manager"
 
-if [ ISNOTMACOS -eq 1 ]; then
+if [ $ISNOTMACOS -eq 1 ]; then
 
   thunar -h >/dev/null 2>&1
   RETCODE=$?
@@ -214,7 +215,7 @@ echo Mounting...
 if [ "$PASSWORD" = "" ]; then
   sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}/ -C -p $PORT
 else
-  bash -c "echo $PASSWORD | sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}/ -C -p $PORT -o password_stdin"
+  bash -c "echo $PASSWORD | sshfs $USERNAME@$IPADDRESS:$REMOTEMOUNTPATH $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}/ -C -p $PORT -o password_stdin"
 fi
 RETCODE=$?
 
