@@ -213,7 +213,7 @@ fi
 echo Mounting...
 
 if [ "$PASSWORD" = "" ]; then
-  sshfs $USERNAME@$IPADDRESS:/ $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}/ -C -p $PORT
+  sshfs $USERNAME@$IPADDRESS:$REMOTEMOUNTPATH $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}/ -C -p $PORT
 else
   bash -c "echo $PASSWORD | sshfs $USERNAME@$IPADDRESS:$REMOTEMOUNTPATH $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}/ -C -p $PORT -o password_stdin"
 fi
