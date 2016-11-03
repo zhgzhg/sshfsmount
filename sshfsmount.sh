@@ -1,8 +1,28 @@
 #!/bin/bash
-# (C) 30.01.2015 zhgzhg
+# (C) 03.11.2016 zhgzhg
 # silent mode format: sshfsmount.sh [--silent password username machine_ip_address port]
+# semi-interactive mode format: sshfsmount.sh username machine_ip_address [port]
 
-############### configuration #####################
+function help()
+{
+	echo "Format:"
+	echo
+	echo "Interactive mode:"
+	echo "  sshfsmount"
+	echo
+	echo "Semi-interactive mode:"
+	echo "  sshfsmount <username> <machine_ip_address> [<port>]"
+	echo
+	echo "Silent mode:"
+	echo "  sshfsmount --silent [<password>] [<username>] [<machine_ip_addr>] [[<port>]]"
+	echo "Each of the above parameters is required, but optional starting from left to"
+	echo "right. Not specifying it will turn off the silent mode and make sshfsmount to"
+	echo "ask for it. The only exception makes the port parameter."
+	echo
+	echo " sshfsmount -h | --h | --help     - displays this help"
+}
+
+##### the default configuration suggested during interactive mode #####
 
 IPADDRESS="192.168.36.98"
 PORT="22"
@@ -10,7 +30,7 @@ USERNAME="root"
 MOUNTPATH="$HOME/sshfsmount"
 REMOTEMOUNTPATH="/"
 
-###################################################
+#######################################################################
 
 IP=""
 PRT=""
@@ -20,8 +40,16 @@ PASSWORD=""
 INSILENTMODE=0
 
 if [ -n "$1" ]; then
+  if [[ "$1" == "-h" || "$1" == "--h" || "$1" == "--help" ]]; then
+    help
+    exit 0
+  fi
+fi
+
+
+if [ -n "$1" ]; then
   if [ "$1" == "--silent" ]; then
-    
+
     if [ -n "$2" ]; then
       PASSWORD=$2
     fi
@@ -32,17 +60,27 @@ if [ -n "$1" ]; then
       IP=$4
     fi
     if [ -n "$5" ]; then
-      PORT=$5
+      PRT=$5
     fi
-    
-    
+
+
     if [[ "$USERNM" != "" && "$IP" != "" && "$PASSWORD" != "" ]]; then
       INSILENTMODE=1
     fi
   else
-    echo -e "Invalid first argument! (Must be --silent)! See comments inside this script!"
-    exit 1
-  fi  
+    if [[ $# -ge 2  && $# -lt 4 ]]; then
+      USERNM=$1
+      IP=$2
+      if [ -n "$3" ]; then
+        PRT=$3
+      else
+        PRT=$PORT
+      fi
+    else
+      help
+      exit 1
+    fi
+  fi
 fi
 
 typeset RETCODE
@@ -57,15 +95,15 @@ if [ ! -d $MOUNTPATH ]; then
 
   mkdir $MOUNTPATH >/dev/null 2>&1
   RETCODE=$?
-  
+
   if [ $RETCODE -ne 0 ]; then
-  
+
     echo Fail!
-    if [[ -f $MOUNTPATH ]]; then 
+    if [[ -f $MOUNTPATH ]]; then
 		echo -e "'${MOUNTPATH}' is a file!\nRename it or remove it from there!"
 		exit 1
 	fi
-    
+
     if [ "$(id -u)" != "0" ]; then
       echo [You need to run this script as root!]
       exit 1
@@ -75,23 +113,23 @@ if [ ! -d $MOUNTPATH ]; then
     fi
   else
     echo Created!
-  fi  
+  fi
 else
-  echo Presented!
+  echo Present!
 fi
 
 echo Testing for write permissions...
-  
+
 TEMPWDIRTEST="write_test_$RANDOM";
 mkdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
 RETCODE=$?
 
 if [ $RETCODE -ne 0 ]; then
   echo Fail! You do not have write permissions in $MOUNTPATH !
-    
+
   if [ "$(id -u)" != "0" ]; then
       echo [Try to run this script as root!]
-  fi  
+  fi
   exit 1
 else
   echo Success!
@@ -105,7 +143,7 @@ RETCODE=$?
 
 if [ $RETCODE -eq 127 ]; then
   echo -e "You need to install sshfs!";
-  echo -e "For Fedora under root run \"yum install sshfs\" and \"yum install fuse-sshfs\".";
+  echo -e "For Fedora under root run \"dnf install sshfs\" and \"dnf install fuse-sshfs\".";
   echo -e "For Ubuntu run \"sudo apt-get install sshfs\" and \"sudo apt-get install fuse-utils\".";
   echo -e "For Mandriva run \"urpmi fuse-utils sshfs\".";
   exit 1
@@ -123,22 +161,22 @@ if [ $ISNOTMACOS -eq 1 ]; then
 
   thunar -h >/dev/null 2>&1
   RETCODE=$?
-  
+
   if [ $RETCODE -eq 127 ]; then
     nautilus -h >/dev/null 2>&1
     RETCODE=$?
-    
+
     if [ $RETCODE -eq 127 ]; then
       dolphin -h >/dev/null 2>&1
       RETCODE=$?
-      
-      if [ $RETCODE -eq 127 ]; then      
+
+      if [ $RETCODE -eq 127 ]; then
         nemo -h >/dev/null 2>&1
         RETCODE=$?
-        
-        if [ $RETCODE -ne 127 ]; then    
+
+        if [ $RETCODE -ne 127 ]; then
           FAVOURITEFILEMANAGER="nemo"
-        fi      
+        fi
       else
         FAVOURITEFILEMANAGER="dolphin"
       fi
@@ -195,54 +233,76 @@ else
   echo -e "Set username => $USERNAME";
 fi
 
+MNT="${MOUNTPATH}/VM_${IPADDRESS}_${PORT}_${USERNAME}"
+echo -e "Checking for ${MNT}...";
 
-echo -e "Checking for $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}...";
-
-if [ ! -d $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME} ]; then
-  echo Missing! Creating one...  
-  mkdir $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}
+if [ ! -d "${MNT}" ]; then
+  echo Missing! Creating one...
+  mkdir "${MNT}"
   RETCODE=$?
   if [ $RETCODE -gt 0 ]; then
-    echo -e "Error! Cannot create that directory!";
-    exit 1;
+    grep -qs "${MNT}" /proc/mounts
+    RETCODE=$?
+    if [ $RETCODE -eq 0 ]; then
+      echo -e "Error! Cannot create that directory!"
+      exit 1;
+    else
+      if [ $ISNOTMACOS -eq 1 ]; then
+	    fusermount -u "${MNT}" >/dev/null 2>&1
+	  else
+	    umount "${MNT}" >/dev/null 2>&1
+	  fi
+	fi
   fi
 else
-  echo Presented!
+  echo Present!
+  grep -qs "${MNT}" /proc/mounts
+  RETCODE=$?
+  if [ $RETCODE -eq 0 ]; then
+    echo -e "Error! The directory is already mounted!"
+    exit 1;
+  else
+	if [ $ISNOTMACOS -eq 1 ]; then
+	  fusermount -u "${MNT}" >/dev/null 2>&1
+	else
+	  umount "${MNT}" >/dev/null 2>&1
+	fi
+  fi
 fi
 
 echo Mounting...
 
 if [ "$PASSWORD" = "" ]; then
-  sshfs $USERNAME@$IPADDRESS:$REMOTEMOUNTPATH $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}/ -C -p $PORT
+  sshfs $USERNAME@$IPADDRESS:$REMOTEMOUNTPATH ${MNT}/ -C -p $PORT
 else
-  bash -c "echo $PASSWORD | sshfs $USERNAME@$IPADDRESS:$REMOTEMOUNTPATH $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}/ -C -p $PORT -o password_stdin"
+  bash -c "echo $PASSWORD | sshfs $USERNAME@$IPADDRESS:$REMOTEMOUNTPATH ${MNT}/ -C -p $PORT -o password_stdin"
 fi
 RETCODE=$?
 
 if [[ $RETCODE -ge 0 && $RETCODE -le 1 ]]; then
   ANS="";
-  echo -e "\nShould be mounted under $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}";
-  
-# check if nohup is presented
+  echo -e "\nShould be mounted under ${MNT}";
+
+# check if nohup is present
 
   nohup --help >/dev/null 2>&1
   RETCODE=$?
 
   if [[ "$FAVOURITEFILEMANAGER" != "your favourite file manager" && $INSILENTMODE -ne 1 ]]; then
-  
+
     while [[ "$ANS" != "Y" && "$ANS" != "y" && "$ANS" != "N" && "$ANS" != "n" ]]; do
       echo -ne "Do you want to open it with $FAVOURITEFILEMANAGER[Y/N]? ";
       read -e -n1 ANS;
     done
 
     if [[ "$ANS" = "Y" || "$ANS" = "y" ]]; then
-      
+
       if [ $RETCODE -ne 127 ]; then
-        FAVOURITEFILEMANAGERCMD="${FAVOURITEFILEMANAGER} $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}";
+        FAVOURITEFILEMANAGERCMD="${FAVOURITEFILEMANAGER} \"${MNT}\"";
         nohup bash -c "$FAVOURITEFILEMANAGERCMD &" >/dev/null 2>&1
         rm nohup.out >/dev/null 2>&1
       else
-        $FAVOURITEFILEMANAGER $MOUNTPATH/VM_${IPADDRESS}_${PORT}_${USERNAME}
+        $FAVOURITEFILEMANAGER "${MNT}"
       fi
     else
       echo Autoopen canceled!
