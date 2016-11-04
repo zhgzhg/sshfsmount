@@ -241,7 +241,7 @@ if [ ! -d "${MNT}" ]; then
   mkdir "${MNT}"
   RETCODE=$?
   if [ $RETCODE -gt 0 ]; then
-    grep -qs "${MNT}" /proc/mounts
+    mount | grep -qs "${MNT}"
     RETCODE=$?
     if [ $RETCODE -eq 0 ]; then
       echo -e "Error! Cannot create that directory!"
@@ -256,7 +256,7 @@ if [ ! -d "${MNT}" ]; then
   fi
 else
   echo Present!
-  grep -qs "${MNT}" /proc/mounts
+  mount | grep -qs "${MNT}"
   RETCODE=$?
   if [ $RETCODE -eq 0 ]; then
     echo -e "Error! The directory is already mounted!"
