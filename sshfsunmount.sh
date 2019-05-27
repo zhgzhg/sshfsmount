@@ -1,5 +1,5 @@
 #!/bin/bash
-# (C) 03.11.2016 zhgzhg
+# (C) 27.05.2019 zhgzhg
 # semi-silent mode format: sshfsunmount.sh [--unmount <full_path>][-1][-2]
 # --unmount <full_path_to_the_directory_to_be_unmounted>
 # -1 unmounts all directories inside the default MOUNTPATH
@@ -31,7 +31,7 @@ MOUNTPATH="$HOME/sshfsmount"
 
 INSILENTMODE=0
 
-if [ -n "$1" ]; then
+if [[ -n "$1" ]]; then
   if [[ "$1" == "-h" || "$1" == "--h" || "$1" == "--help" ]]; then
     help
     exit 0
@@ -55,8 +55,8 @@ typeset RETCODE
 
 echo Checking for $MOUNTPATH ...
 
-if [ ! -d $MOUNTPATH ]; then
-  if [ $INSILENTMODE -eq 1 ]; then
+if [[ ! -d ${MOUNTPATH} ]]; then
+  if [[ ${INSILENTMODE} -eq 1 ]]; then
     echo Missing! Check your path and directory name!
   else
     echo Missing! You need to configure MOUNTPATH script variable!
@@ -65,7 +65,7 @@ if [ ! -d $MOUNTPATH ]; then
 else
   echo -n "Present! "
 
-  if [ $INSILENTMODE -eq 0 ]; then
+  if [[ ${INSILENTMODE} -eq 0 ]]; then
     echo Testing for write permissions...
   else
     echo Write permissions testing is skipped in this mode!
@@ -73,32 +73,52 @@ else
 
   TEMPWDIRTEST="write_test_$RANDOM";
 
-  if [ $INSILENTMODE -eq 0 ]; then
+  if [[ ${INSILENTMODE} -eq 0 ]]; then
     mkdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
     RETCODE=$?
   else
     RETCODE=0
   fi
 
-  if [ $RETCODE -ne 0 ]; then
+  if [[ ${RETCODE} -ne 0 ]]; then
     echo Fail! You do not have write permissions in $MOUNTPATH !
-    if [ "$(id -u)" != "0" ]; then
+    if [[ "$(id -u)" != "0" ]]; then
         echo [Try to run this script as root!]
     fi
     exit 1
   else
     echo Success!
-    rmdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
+    rmdir "${MOUNTPATH}/${TEMPWDIRTEST}" >/dev/null 2>&1
   fi
-
 fi
 
-# check for available sshfs executable
+# check if this is Mac OS
+uname -a | grep "Darwin" >/dev/null
+ISNOTMACOS=$?
+
+# check for available sshfs and fusermount executable
+
+typeset FUSERMOUNT
 
 sshfs -h >/dev/null 2>&1
 RETCODE=$?
 
-if [ $RETCODE -eq 127 ]; then
+if [[ ${ISNOTMACOS} -eq 1 ]]; then
+  FUSERMOUNT="fusermount"
+
+  if [[ ${RETCODE} -ne 127 ]]; then
+    $FUSERMOUNT -h >/dev/null 2>&1
+    RETCODE=$?
+
+    if [[ ${RETCODE} -eq 127 ]]; then
+      FUSERMOUNT="fusermount3"
+      $FUSERMOUNT -h >/dev/null 2>&1
+      RETCODE=$?
+    fi
+  fi
+fi
+
+if [[ ${RETCODE} -eq 127 ]]; then
   echo -e "You need to install sshfs!";
   echo -e "For Fedora under root run \"dnf install sshfs\" and \"dnf install fuse-sshfs\".";
   echo -e "For Ubuntu run \"sudo apt-get install sshfs\" and \"sudo apt-get install fuse-utils\".";
@@ -108,13 +128,13 @@ fi
 
 declare -a dirs
 i=1
-if [ $INSILENTMODE -ne 1 ]; then
-  for d in $MOUNTPATH/*
+if [[ ${INSILENTMODE} -ne 1 ]]; then
+  for d in ${MOUNTPATH}/*
   do
     dirs[i++]="${d%/}"
   done
 
-  if [ "${dirs[1]}" == "$MOUNTPATH/*" ]; then
+  if [[ "${dirs[1]}" == "$MOUNTPATH/*" ]]; then
     echo -e "\nNo available directories inside $MOUNTPATH !"
     exit 1
   fi
@@ -122,7 +142,7 @@ else
   dirs[i++]="$MOUNTPATH"
 fi
 
-if [ $INSILENTMODE -eq 0 ]; then
+if [[ ${INSILENTMODE} -eq 0 ]]; then
   echo -e "\nDirectories list (for unmounting are those with \"VM_\" prefix):\n"
 
   echo "[ -2 ]: Force unmount everything"
@@ -140,20 +160,20 @@ fi
 ENDOFINDEX=0
 INDEX=""
 
-if [ $INSILENTMODE -eq 0 ]; then
+if [[ ${INSILENTMODE} -eq 0 ]]; then
   read -e INDEX;
 else
-  INDEX=$INSILENTMODE;
+  INDEX=${INSILENTMODE};
 fi
 
-if [ $INDEX -eq 0 ]; then
+if [[ ${INDEX} -eq 0 ]]; then
   echo Canceled!
   exit 1
 fi
 
 
-if [ $INDEX -lt 0 ]; then
-  if [ $INDEX -eq -1 ]; then
+if [[ ${INDEX} -lt 0 ]]; then
+  if [[ ${INDEX} -eq -1 ]]; then
     echo Starting unmounting of all directories!
   else
     echo Starting forced unmounting of all directories!
@@ -162,18 +182,15 @@ if [ $INDEX -lt 0 ]; then
   INDEX=1
   ENDOFINDEX=${#dirs[@]};
 else
-  ENDOFINDEX=INDEX;
+  ENDOFINDEX=${INDEX};
 fi
 
-# check if this is Mac OS
-uname -a | grep "Darwin" >/dev/null
-ISNOTMACOS=$?
 
 for ((i=$INDEX;i<=$ENDOFINDEX;i++))
 do
   echo -e "Unmounting ${dirs[$i]}..."
-  if [ $ISNOTMACOS -eq 1 ]; then
-    fusermount -u ${dirs[$i]}
+  if [[ ${ISNOTMACOS} -eq 1 ]]; then
+    $FUSERMOUNT -u ${dirs[$i]}
   else
     umount ${dirs[$i]}
   fi
