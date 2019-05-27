@@ -97,7 +97,6 @@ uname -a | grep "Darwin" >/dev/null
 ISNOTMACOS=$?
 
 # check for available sshfs and fusermount executable
-
 typeset FUSERMOUNT
 
 sshfs -h >/dev/null 2>&1
