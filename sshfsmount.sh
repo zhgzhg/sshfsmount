@@ -1,85 +1,51 @@
 #!/bin/bash
-# (C) 03.11.2016 zhgzhg
-# silent mode format: sshfsmount.sh [--silent password username machine_ip_address port]
-# semi-interactive mode format: sshfsmount.sh username machine_ip_address [port]
+# (C) 27.05.2019 zhgzhg
+# semi-silent mode format: sshfsunmount.sh [--unmount <full_path>][-1][-2]
+# --unmount <full_path_to_the_directory_to_be_unmounted>
+# -1 unmounts all directories inside the default MOUNTPATH
+# -2 forced unmount of all inside the default MOUNTPATH
 
 function help()
 {
 	echo "Format:"
 	echo
 	echo "Interactive mode:"
-	echo "  sshfsmount"
+	echo "  sshfsunmount"
 	echo
-	echo "Semi-interactive mode:"
-	echo "  sshfsmount <username> <machine_ip_address> [<port>]"
+	echo "Silent modes:"
+	echo "  sshfsunmount --unmount <full_path>"
+	echo "  sshfsunmount [<-1> | <-2>]"
 	echo
-	echo "Silent mode:"
-	echo "  sshfsmount --silent [<password>] [<username>] [<machine_ip_addr>] [[<port>]]"
-	echo "Each of the above parameters is required, but optional starting from left to"
-	echo "right. Not specifying it will turn off the silent mode and make sshfsmount to"
-	echo "ask for it. The only exception makes the port parameter."
+	echo "--unmount <full_path_to_the_directory_to_be_unmounted>"
+	echo "-1 unmounts all directories inside the default MOUNTPATH specified in the script"
+	echo "-2 forced unmount of all inside the default MOUNTPATH specified in the script"
 	echo
 	echo " sshfsmount -h | --h | --help     - displays this help"
 }
 
-##### the default configuration suggested during interactive mode #####
+############### configuration #####################
 
-IPADDRESS="192.168.36.98"
-PORT="22"
-USERNAME="root"
 MOUNTPATH="$HOME/sshfsmount"
-REMOTEMOUNTPATH="/"
 
-#######################################################################
-
-IP=""
-PRT=""
-USERNM=""
-PASSWORD=""
+###################################################
 
 INSILENTMODE=0
 
-if [ -n "$1" ]; then
+if [[ -n "$1" ]]; then
   if [[ "$1" == "-h" || "$1" == "--h" || "$1" == "--help" ]]; then
     help
     exit 0
   fi
-fi
-
-
-if [ -n "$1" ]; then
-  if [ "$1" == "--silent" ]; then
-
-    if [ -n "$2" ]; then
-      PASSWORD=$2
-    fi
-    if [ -n "$3" ]; then
-      USERNM=$3
-    fi
-    if [ -n "$4" ]; then
-      IP=$4
-    fi
-    if [ -n "$5" ]; then
-      PRT=$5
-    fi
-
-
-    if [[ "$USERNM" != "" && "$IP" != "" && "$PASSWORD" != "" ]]; then
-      INSILENTMODE=1
-    fi
+  if [[ -n "$2" && "$1" == "--unmount" ]]; then
+    INSILENTMODE=1
+    MOUNTPATH=$2
+  elif [[ "$1" == "-1" || "$1" == "-2" ]]; then
+    INSILENTMODE=$1
   else
-    if [[ $# -ge 2  && $# -lt 4 ]]; then
-      USERNM=$1
-      IP=$2
-      if [ -n "$3" ]; then
-        PRT=$3
-      else
-        PRT=$PORT
-      fi
-    else
-      help
-      exit 1
-    fi
+    echo -e "Invalid parameters! Must be --unmount <directory_full_path>"
+    echo -e "or -1 or -2 for normal/force unmount of all directories"
+    echo -e "inside the set default path."
+    exit 1;
   fi
 fi
 
@@ -87,61 +53,72 @@ typeset RETCODE
 
 # check if mount path exists
 
-echo -e "Checking for '${MOUNTPATH}' directory..."
+echo Checking for $MOUNTPATH ...
 
-if [ ! -d $MOUNTPATH ]; then
-
-  echo Missing! Trying to create it!
-
-  mkdir $MOUNTPATH >/dev/null 2>&1
-  RETCODE=$?
-
-  if [ $RETCODE -ne 0 ]; then
-
-    echo Fail!
-    if [[ -f $MOUNTPATH ]]; then
-		echo -e "'${MOUNTPATH}' is a file!\nRename it or remove it from there!"
-		exit 1
-	fi
-
-    if [ "$(id -u)" != "0" ]; then
-      echo [You need to run this script as root!]
-      exit 1
-    else
-      echo Cannot create $MOUNTPATH !
-      exit 1
-    fi
+if [[ ! -d ${MOUNTPATH} ]]; then
+  if [[ ${INSILENTMODE} -eq 1 ]]; then
+    echo Missing! Check your path and directory name!
   else
-    echo Created!
-  fi
-else
-  echo Present!
-fi
-
-echo Testing for write permissions...
-
-TEMPWDIRTEST="write_test_$RANDOM";
-mkdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
-RETCODE=$?
-
-if [ $RETCODE -ne 0 ]; then
-  echo Fail! You do not have write permissions in $MOUNTPATH !
-
-  if [ "$(id -u)" != "0" ]; then
-      echo [Try to run this script as root!]
+    echo Missing! You need to configure MOUNTPATH script variable!
   fi
   exit 1
 else
-  echo Success!
-  rmdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
+  echo -n "Present! "
+
+  if [[ ${INSILENTMODE} -eq 0 ]]; then
+    echo Testing for write permissions...
+  else
+    echo Write permissions testing is skipped in this mode!
+  fi
+
+  TEMPWDIRTEST="write_test_$RANDOM";
+
+  if [[ ${INSILENTMODE} -eq 0 ]]; then
+    mkdir $MOUNTPATH/$TEMPWDIRTEST >/dev/null 2>&1
+    RETCODE=$?
+  else
+    RETCODE=0
+  fi
+
+  if [[ ${RETCODE} -ne 0 ]]; then
+    echo Fail! You do not have write permissions in $MOUNTPATH !
+    if [[ "$(id -u)" != "0" ]]; then
+        echo [Try to run this script as root!]
+    fi
+    exit 1
+  else
+    echo Success!
+    rmdir "${MOUNTPATH}/${TEMPWDIRTEST}" >/dev/null 2>&1
+  fi
 fi
 
-# check for available sshfs executable
+# check if this is Mac OS
+uname -a | grep "Darwin" >/dev/null
+ISNOTMACOS=$?
+
+# check for available sshfs and fusermount executable
+
+typeset FUSERMOUNT
 
 sshfs -h >/dev/null 2>&1
 RETCODE=$?
 
-if [ $RETCODE -eq 127 ]; then
+if [[ ${ISNOTMACOS} -eq 1 ]]; then
+  FUSERMOUNT="fusermount"
+
+  if [[ ${RETCODE} -ne 127 ]]; then
+    ${FUSERMOUNT} -h >/dev/null 2>&1
+    RETCODE=$?
+
+    if [[ ${RETCODE} -eq 127 ]]; then
+      FUSERMOUNT="fusermount3"
+      ${FUSERMOUNT} -h >/dev/null 2>&1
+      RETCODE=$?
+    fi
+  fi
+fi
+
+if [[ ${RETCODE} -eq 127 ]]; then
   echo -e "You need to install sshfs!";
   echo -e "For Fedora under root run \"dnf install sshfs\" and \"dnf install fuse-sshfs\".";
   echo -e "For Ubuntu run \"sudo apt-get install sshfs\" and \"sudo apt-get install fuse-utils\".";
@@ -149,165 +126,76 @@ if [ $RETCODE -eq 127 ]; then
   exit 1
 fi
 
-# check if this is Mac OS
-uname -a | grep "Darwin" >/dev/null
-ISNOTMACOS=$?
+declare -a dirs
+i=1
+if [[ ${INSILENTMODE} -ne 1 ]]; then
+  for d in ${MOUNTPATH}/*
+  do
+    dirs[i++]="${d%/}"
+  done
 
-#check for available file managers
+  if [[ "${dirs[1]}" == "$MOUNTPATH/*" ]]; then
+    echo -e "\nNo available directories inside $MOUNTPATH !"
+    exit 1
+  fi
+else
+  dirs[i++]="$MOUNTPATH"
+fi
 
-FAVOURITEFILEMANAGER="your favourite file manager"
+if [[ ${INSILENTMODE} -eq 0 ]]; then
+  echo -e "\nDirectories list (for unmounting are those with \"VM_\" prefix):\n"
 
-if [ $ISNOTMACOS -eq 1 ]; then
+  echo "[ -2 ]: Force unmount everything"
+  echo -e "[ -1 ]: Unmount everything\n"
+  echo -e "[ 0 ]:  Cancel\n"
 
-  thunar -h >/dev/null 2>&1
-  RETCODE=$?
+  for((i=1;i<=${#dirs[@]};i++))
+  do
+    echo "[" $i "]: " "${dirs[i]}"
+  done
 
-  if [ $RETCODE -eq 127 ]; then
-    nautilus -h >/dev/null 2>&1
-    RETCODE=$?
+  echo -e "\nChoose the directory you want to unmount: "
+fi
 
-    if [ $RETCODE -eq 127 ]; then
-      dolphin -h >/dev/null 2>&1
-      RETCODE=$?
+ENDOFINDEX=0
+INDEX=""
 
-      if [ $RETCODE -eq 127 ]; then
-        nemo -h >/dev/null 2>&1
-        RETCODE=$?
+if [[ ${INSILENTMODE} -eq 0 ]]; then
+  read -e INDEX;
+else
+  INDEX=${INSILENTMODE};
+fi
 
-        if [ $RETCODE -ne 127 ]; then
-          FAVOURITEFILEMANAGER="nemo"
-        fi
-      else
-        FAVOURITEFILEMANAGER="dolphin"
-      fi
-    else
-      FAVOURITEFILEMANAGER="nautilus"
-    fi
+if [[ ${INDEX} -eq 0 ]]; then
+  echo Canceled!
+  exit 1
+fi
+
+
+if [[ ${INDEX} -lt 0 ]]; then
+  if [[ ${INDEX} -eq -1 ]]; then
+    echo Starting unmounting of all directories!
   else
-    FAVOURITEFILEMANAGER="thunar"
+    echo Starting forced unmounting of all directories!
+    killall -s 5 sshfs >/dev/null 2>&1
   fi
+  INDEX=1
+  ENDOFINDEX=${#dirs[@]};
 else
-  FAVOURITEFILEMANAGER="open"
-fi
-echo -ne "\n"
-
-
-if [[ $INSILENTMODE -ne 1 && "$IP" = "" ]]; then
-
-  echo -e "Hostname/IP Address (default $IPADDRESS): ";
-  read -e IP;
-  echo -en "\033[1A\033[2K";
+  ENDOFINDEX=${INDEX};
 fi
 
-if [ -n "$IP" ]; then
-  echo -e "Set machine address => $IP";
-  IPADDRESS=$IP;
-else
-  echo -e "Set machine address => $IPADDRESS";
-fi
 
-if [[ $INSILENTMODE -ne 1 && "$PRT" = "" ]]; then
-
-  echo -e "Port (default $PORT): ";
-  read -e PRT;
-  echo -en "\033[1A\033[2K";
-fi
-
-if [ -n "$PRT" ]; then
-  echo -e "Set machine port => $PRT";
-  PORT=$PRT;
-else
-  echo -e "Set machine port => $PORT";
-fi
-
-if [[ $INSILENTMODE -ne 1 && "$USERNM" = "" ]]; then
-  echo -e "Username (default $USERNAME): ";
-  read -e USERNM;
-  echo -en "\033[1A\033[2K";
-fi
-
-if [ -n "$USERNM" ]; then
-  echo -e "Set username => $USERNM";
-  USERNAME=$USERNM;
-else
-  echo -e "Set username => $USERNAME";
-fi
-
-MNT="${MOUNTPATH}/VM_${IPADDRESS}_${PORT}_${USERNAME}"
-echo -e "Checking for ${MNT}...";
-
-if [ ! -d "${MNT}" ]; then
-  echo Missing! Creating one...
-  mkdir "${MNT}"
-  RETCODE=$?
-  if [ $RETCODE -gt 0 ]; then
-    mount | grep -qs "${MNT}"
-    RETCODE=$?
-    if [ $RETCODE -eq 0 ]; then
-      echo -e "Error! Cannot create that directory!"
-      exit 1;
-    else
-      if [ $ISNOTMACOS -eq 1 ]; then
-	    fusermount -u "${MNT}" >/dev/null 2>&1
-	  else
-	    umount "${MNT}" >/dev/null 2>&1
-	  fi
-	fi
-  fi
-else
-  echo Present!
-  mount | grep -qs "${MNT}"
-  RETCODE=$?
-  if [ $RETCODE -eq 0 ]; then
-    echo -e "Error! The directory is already mounted!"
-    exit 1;
+for ((i=$INDEX;i<=$ENDOFINDEX;i++))
+do
+  echo -e "Unmounting ${dirs[$i]}..."
+  if [[ ${ISNOTMACOS} -eq 1 ]]; then
+    ${FUSERMOUNT} -u ${dirs[$i]}
   else
-	if [ $ISNOTMACOS -eq 1 ]; then
-	  fusermount -u "${MNT}" >/dev/null 2>&1
-	else
-	  umount "${MNT}" >/dev/null 2>&1
-	fi
+    umount ${dirs[$i]}
   fi
-fi
+  echo -e "Removing ${dirs[$i]}..."
+  rmdir ${dirs[$i]}
+done
 
-echo Mounting...
-
-if [ "$PASSWORD" = "" ]; then
-  sshfs $USERNAME@$IPADDRESS:$REMOTEMOUNTPATH ${MNT}/ -C -p $PORT
-else
-  bash -c "echo $PASSWORD | sshfs $USERNAME@$IPADDRESS:$REMOTEMOUNTPATH ${MNT}/ -C -p $PORT -o password_stdin"
-fi
-RETCODE=$?
-
-if [[ $RETCODE -ge 0 && $RETCODE -le 1 ]]; then
-  ANS="";
-  echo -e "\nShould be mounted under ${MNT}";
-
-# check if nohup is present
-
-  nohup --help >/dev/null 2>&1
-  RETCODE=$?
-
-  if [[ "$FAVOURITEFILEMANAGER" != "your favourite file manager" && $INSILENTMODE -ne 1 ]]; then
-
-    while [[ "$ANS" != "Y" && "$ANS" != "y" && "$ANS" != "N" && "$ANS" != "n" ]]; do
-      echo -ne "Do you want to open it with $FAVOURITEFILEMANAGER[Y/N]? ";
-      read -e -n1 ANS;
-    done
-
-    if [[ "$ANS" = "Y" || "$ANS" = "y" ]]; then
-
-      if [ $RETCODE -ne 127 ]; then
-        FAVOURITEFILEMANAGERCMD="${FAVOURITEFILEMANAGER} \"${MNT}\"";
-        nohup bash -c "$FAVOURITEFILEMANAGERCMD &" >/dev/null 2>&1
-        rm nohup.out >/dev/null 2>&1
-      else
-        $FAVOURITEFILEMANAGER "${MNT}"
-      fi
-    else
-      echo Autoopen canceled!
-    fi
-  else
-    echo -e "To open it run use $FAVOURITEFILEMANAGER."
-  fi
-fi
+echo Done!
