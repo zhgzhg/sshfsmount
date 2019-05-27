@@ -97,7 +97,6 @@ uname -a | grep "Darwin" >/dev/null
 ISNOTMACOS=$?
 
 # check for available sshfs and fusermount executable
-
 typeset FUSERMOUNT
 
 sshfs -h >/dev/null 2>&1
@@ -107,12 +106,12 @@ if [[ ${ISNOTMACOS} -eq 1 ]]; then
   FUSERMOUNT="fusermount"
 
   if [[ ${RETCODE} -ne 127 ]]; then
-    $FUSERMOUNT -h >/dev/null 2>&1
+    ${FUSERMOUNT} -h >/dev/null 2>&1
     RETCODE=$?
 
     if [[ ${RETCODE} -eq 127 ]]; then
       FUSERMOUNT="fusermount3"
-      $FUSERMOUNT -h >/dev/null 2>&1
+      ${FUSERMOUNT} -h >/dev/null 2>&1
       RETCODE=$?
     fi
   fi
@@ -190,7 +189,7 @@ for ((i=$INDEX;i<=$ENDOFINDEX;i++))
 do
   echo -e "Unmounting ${dirs[$i]}..."
   if [[ ${ISNOTMACOS} -eq 1 ]]; then
-    $FUSERMOUNT -u ${dirs[$i]}
+    ${FUSERMOUNT} -u ${dirs[$i]}
   else
     umount ${dirs[$i]}
   fi
